@@ -1,0 +1,2 @@
+iteration,strategy,ppo_group1_return,ppo_group2_return,a2c_group1_return,a2c_group2_return,ddpg_group1_return,ddpg_group2_return
+0,baseline,-0.2073559025342795,-0.19099956253908235,-0.12942651766156832,-0.0972270397006102,-0.04039740866576791,0.10947532933161219
