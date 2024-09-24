@@ -6,8 +6,8 @@ import random
 import os
 
 #Local Import
-from config.py import data_dir
-from utils import get_next_combination
+from experiment_config import data_dir
+from experiment_utils import get_next_combination
 
 def get_data_from_yahoo(tic_list, start_date='2009-01-01', end_date='2024-01-01'):
     """
@@ -158,24 +158,37 @@ def split_collect_stock_data_from_csv(tic_list, csv_file='dji_stock_data.csv', c
     - group1, group2: The tickers for group1 and group2.
     - df1, df2: DataFrames for group1 and group2 with technical indicators and covariance.
     """
+    # Create the directory if it doesn't exist
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    
     # Load the stock data from the CSV if it exists
     if os.path.exists(os.path.join(data_dir, csv_file)):
         df = pd.read_csv(os.path.join(data_dir, csv_file))
         print(f"Loaded stock data from {csv_file}")
     else:
         df = get_data_from_yahoo(tic_list, start_date=start_date, end_date=end_date)
+        df = df.reset_index()
         print(f"Collect data from Yahoo")
         df.to_csv(os.path.join(data_dir, csv_file), index=False)
 
     # Filter the data by date range
+    df = df.set_index('tic')
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
     # Get the next untrained combination of group1 and group2
     iteration, group1, group2 = get_next_combination(combination_file)
 
     # Create df1 and df2 based on the 'tic' index (ticker symbol)
+    df = df.reset_index()
     df1 = df[df['tic'].isin(group1)].copy()
     df2 = df[df['tic'].isin(group2)].copy()
+
+    df1 = df1.reset_index()
+    df1 = df1.set_index('tic')
+
+    df2 = df2.reset_index()
+    df2 = df2.set_index('tic')
 
     # Add technical indicators and covariance to df1 and df2
     df1 = add_technical_indicators(df1)
