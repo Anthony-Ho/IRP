@@ -55,32 +55,47 @@ def prebuild_group_combinations(tic_list, num_iterations, output_file='combinati
 
 def get_next_combination(csv_file='combinations.csv', container_id=None):
     """
-    Get the next untrained group1 and group2 combination from a CSV file and mark it as "training".
-    
-    Parameters:
+    Get the next untrained group1 and group2 combination from a CSV file and mark it as training.
+
+    Parameters: 
     - csv_file: Path to the CSV file storing the combinations.
     - container_id: ID of the container or process taking up the combination (optional).
     
     Returns:
-    - group1, group2: Lists of tickers for group1 and group2.
+    - iteration, group1, group2, lock_file: Iteration number, lists of tickers for group1 and group2.
     """
+    
     # Load the CSV file
     df = pd.read_csv(os.path.join(data_dir, csv_file))
 
-    # Find the next untrained combination
-    untrained_row = df[df['status'] == 'untrained'].iloc[0]
+    # Loop through the CSV to find the first untrained combination
+    for index, untrained_row in df[df['status'] == 'untrained'].iterrows():
+        iteration = untrained_row['iteration']
+        lock_file = os.path.join(data_dir, f'lockfile_{iteration}.lck')
 
-    # Extract group1 and group2 from the row
-    group1 = eval(untrained_row['group1'])  # Convert string representation of list to actual list
-    group2 = eval(untrained_row['group2'])  # Convert string representation of list to actual list
+        # Try to create a lock file for this iteration
+        try:
+            os.open(lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            # Another node is working on this combination, skip it
+            continue
 
-    # Mark this combination as "training"
-    df.loc[df['iteration'] == untrained_row['iteration'], 'status'] = 'training'
+        # If lock file created successfully, proceed
+        # Extract group1 and group2 from the row
+        group1 = eval(untrained_row['group1'])  # Convert string representation of list to actual list
+        group2 = eval(untrained_row['group2'])  # Convert string representation of list to actual list
 
-    # Save the updated CSV
-    df.to_csv(os.path.join(data_dir, csv_file), index=False)
+        # Mark this combination as "training"
+        df.loc[df['iteration'] == untrained_row['iteration'], 'status'] = 'training'
 
-    return untrained_row['iteration'], group1, group2
+        # Save the updated CSV
+        df.to_csv(os.path.join(data_dir, csv_file), index=False)
+
+        # Return the iteration and groups, along with the lock file
+        return iteration, group1, group2
+
+    # If no untrained combinations found, return None
+    return None
 
 def update_combination_status(iteration, new_status, csv_file='combinations.csv'):
     """
@@ -102,6 +117,11 @@ def update_combination_status(iteration, new_status, csv_file='combinations.csv'
 
     # Save the updated CSV
     df.to_csv(os.path.join(data_dir, csv_file), index=False)
+
+    # Remove lockfile if exists
+    lock_file = os.path.join(data_dir, f'lockfile_{iteration}.lck')
+    if os.path.exists(lock_file):
+        os.remove(lock_file)
 
     print(f"Updated iteration {iteration} to status: {new_status}")
 
