@@ -3,11 +3,12 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from stable_baselines3 import PPO, A2C, DDPG
 from stable_baselines3.common.policies import ActorCriticPolicy
-from stable_baselines3.common.utils import polyak_update
+from stable_baselines3.common.utils import polyak_update, explained_variance
 import torch.nn.functional as F
 import gymnasium as gym
 import random
 import os
+from gymasium import spaces
 
 # Local Import
 from envs import PortfolioAllocationEnv
@@ -117,57 +118,78 @@ class EWC_PPO(PPO):
         super(EWC_PPO, self).__init__(*args, **kwargs)
         self.ewc = ewc
 
-    def train(self):
-        # Set the policy to training mode
+    def train(self) -> None:
+        """
+        Update policy using the currently gathered rollout buffer.
+        """
+        # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
-        # Update learning rate
+        # Update optimizer learning rate
         self._update_learning_rate(self.policy.optimizer)
-
-        # Evaluate clip range
-        clip_range = self.clip_range
-        if callable(clip_range):
-            clip_range = clip_range(self._current_progress_remaining)
-
-        # If using clip_range_vf, evaluate it similarly
-        clip_range_vf = self.clip_range_vf
-        if callable(clip_range_vf):
-            clip_range_vf = clip_range_vf(self._current_progress_remaining)
+        # Compute current clip range
+        clip_range = self.clip_range(self._current_progress_remaining)  # type: ignore[operator]
+        # Optional: clip range for the value function
+        if self.clip_range_vf is not None:
+            clip_range_vf = self.clip_range_vf(self._current_progress_remaining)  # type: ignore[operator]
 
         entropy_losses = []
         pg_losses, value_losses = [], []
         clip_fractions = []
-        approx_kl_divs = []
 
+        continue_training = True
+        # train for n_epochs epochs
         for epoch in range(self.n_epochs):
+            approx_kl_divs = []
+            # Do a complete pass on the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
-                # Compute values and log probabilities
-                values, log_prob, entropy = self.policy.evaluate_actions(
-                    rollout_data.observations, rollout_data.actions
-                )
+                actions = rollout_data.actions
+                if isinstance(self.action_space, spaces.Discrete):
+                    # Convert discrete action from float to long
+                    actions = rollout_data.actions.long().flatten()
+
+                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
                 values = values.flatten()
-                # Normalize advantages
+                # Normalize advantage
                 advantages = rollout_data.advantages
-                if self.normalize_advantage:
+                # Normalization does not make sense if mini batchsize == 1, see GH issue #325
+                if self.normalize_advantage and len(advantages) > 1:
                     advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-                # Compute ratio
-                ratio = torch.exp(log_prob - rollout_data.old_log_prob)
-                # Compute policy loss
-                surr1 = ratio * advantages
-                surr2 = torch.clamp(ratio, 1 - clip_range, 1 + clip_range) * advantages  # Use evaluated clip_range
-                policy_loss = -torch.min(surr1, surr2).mean()
-                # Compute value loss
-                values_pred = values
-                if self.clip_range_vf is not None:
-                    # Clip the value prediction
-                    values_pred_clipped = rollout_data.old_values + torch.clamp(
-                        values_pred - rollout_data.old_values, -clip_range_vf, clip_range_vf
-                    )
-                    value_loss = F.mse_loss(rollout_data.returns, values_pred_clipped)
+
+                # ratio between old and new policy, should be one at the first iteration
+                ratio = th.exp(log_prob - rollout_data.old_log_prob)
+
+                # clipped surrogate loss
+                policy_loss_1 = advantages * ratio
+                policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
+                policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
+
+                # Logging
+                pg_losses.append(policy_loss.item())
+                clip_fraction = th.mean((th.abs(ratio - 1) > clip_range).float()).item()
+                clip_fractions.append(clip_fraction)
+
+                if self.clip_range_vf is None:
+                    # No clipping
+                    values_pred = values
                 else:
-                    value_loss = F.mse_loss(rollout_data.returns, values_pred)
-                # Compute entropy loss
-                entropy_loss = -torch.mean(entropy)
-                # Compute total loss
+                    # Clip the difference between old and new value
+                    # NOTE: this depends on the reward scaling
+                    values_pred = rollout_data.old_values + th.clamp(
+                        values - rollout_data.old_values, -clip_range_vf, clip_range_vf
+                    )
+                # Value loss using the TD(gae_lambda) target
+                value_loss = F.mse_loss(rollout_data.returns, values_pred)
+                value_losses.append(value_loss.item())
+
+                # Entropy loss favor exploration
+                if entropy is None:
+                    # Approximate entropy when no analytical form
+                    entropy_loss = -th.mean(-log_prob)
+                else:
+                    entropy_loss = -th.mean(entropy)
+
+                entropy_losses.append(entropy_loss.item())
+
                 loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
 
                 # Add EWC penalty
@@ -175,74 +197,97 @@ class EWC_PPO(PPO):
                     ewc_penalty = self.ewc.penalty()
                     loss += ewc_penalty
 
+                # Calculate approximate form of reverse KL Divergence for early stopping
+                # see issue #417: https://github.com/DLR-RM/stable-baselines3/issues/417
+                # and discussion in PR #419: https://github.com/DLR-RM/stable-baselines3/pull/419
+                # and Schulman blog: http://joschu.net/blog/kl-approx.html
+                with th.no_grad():
+                    log_ratio = log_prob - rollout_data.old_log_prob
+                    approx_kl_div = th.mean((th.exp(log_ratio) - 1) - log_ratio).cpu().numpy()
+                    approx_kl_divs.append(approx_kl_div)
+
+                if self.target_kl is not None and approx_kl_div > 1.5 * self.target_kl:
+                    continue_training = False
+                    if self.verbose >= 1:
+                        print(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl_div:.2f}")
+                    break
+
                 # Optimization step
                 self.policy.optimizer.zero_grad()
                 loss.backward()
-                # Clip gradients if needed
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                # Clip grad norm
+                th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
                 self.policy.optimizer.step()
 
-                # Log losses
-                pg_losses.append(policy_loss.item())
-                value_losses.append(value_loss.item())
-                entropy_losses.append(entropy_loss.item())
+            self._n_updates += 1
+            if not continue_training:
+                break
 
-                # Compute approximate KL divergence
-                approx_kl_div = (rollout_data.old_log_prob - log_prob).mean().item()
-                approx_kl_divs.append(approx_kl_div)
-                # Compute clip fraction
-                clip_fraction = torch.mean((torch.abs(ratio - 1) > clip_range).float()).item()
-                clip_fractions.append(clip_fraction)
+        explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
+
+        # Logs
+        self.logger.record("train/entropy_loss", np.mean(entropy_losses))
+        self.logger.record("train/policy_gradient_loss", np.mean(pg_losses))
+        self.logger.record("train/value_loss", np.mean(value_losses))
+        self.logger.record("train/approx_kl", np.mean(approx_kl_divs))
+        self.logger.record("train/clip_fraction", np.mean(clip_fractions))
+        self.logger.record("train/loss", loss.item())
+        self.logger.record("train/explained_variance", explained_var)
+        if hasattr(self.policy, "log_std"):
+            self.logger.record("train/std", th.exp(self.policy.log_std).mean().item())
+
+        self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+        self.logger.record("train/clip_range", clip_range)
+        if self.clip_range_vf is not None:
+            self.logger.record("train/clip_range_vf", clip_range_vf)
+
 
 class EWC_A2C(A2C):
     def __init__(self, *args, ewc=None, **kwargs):
         super(EWC_A2C, self).__init__(*args, **kwargs)
         self.ewc = ewc
 
-    def train(self):
-        # Switch to train mode
+    def train(self) -> None:
+        """
+        Update policy using the currently gathered
+        rollout buffer (one gradient step over whole data).
+        """
+        # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
+
         # Update optimizer learning rate
         self._update_learning_rate(self.policy.optimizer)
-
-        # Initialize lists to accumulate losses
-        policy_losses = []
-        value_losses = []
-        entropy_losses = []
+        
         ewc_penalties = []
 
-        # Sample minibatches of transitions
+        # This will only loop once (get all data in one go)
         for rollout_data in self.rollout_buffer.get(batch_size=None):
-            # Unpack the data
-            observations = rollout_data.observations
             actions = rollout_data.actions
-            old_values = rollout_data.old_values
-            old_log_prob = rollout_data.old_log_prob
-            advantages = rollout_data.advantages
-            returns = rollout_data.returns
-
-            # Flatten the actions in case of discrete action space
-            if isinstance(self.action_space, gym.spaces.Discrete):
+            if isinstance(self.action_space, spaces.Discrete):
+                # Convert discrete action from float to long
                 actions = actions.long().flatten()
 
-            # Evaluate the current policy
-            values, log_prob, entropy = self.policy.evaluate_actions(observations, actions)
+            values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
             values = values.flatten()
 
-            # Normalize advantages
+            # Normalize advantage (not present in the original implementation)
+            advantages = rollout_data.advantages
             if self.normalize_advantage:
                 advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
-            # Policy loss
+            # Policy gradient loss
             policy_loss = -(advantages * log_prob).mean()
 
-            # Value loss
-            value_loss = F.mse_loss(returns, values)
+            # Value loss using the TD(gae_lambda) target
+            value_loss = F.mse_loss(rollout_data.returns, values)
 
-            # Entropy loss
-            entropy_loss = -torch.mean(entropy)
+            # Entropy loss favor exploration
+            if entropy is None:
+                # Approximate entropy when no analytical form
+                entropy_loss = -torch.mean(-log_prob)
+            else:
+                entropy_loss = -torch.mean(entropy)
 
-            # Total loss
             loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
 
             # Add EWC penalty
@@ -250,26 +295,29 @@ class EWC_A2C(A2C):
                 ewc_penalty = self.ewc.penalty()
                 loss += ewc_penalty
                 ewc_penalties.append(ewc_penalty.item())
-            else:
-                ewc_penalty = 0.0
 
-            # Perform optimization
+            # Optimization step
             self.policy.optimizer.zero_grad()
             loss.backward()
+
+            # Clip grad norm
             torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
             self.policy.optimizer.step()
 
-            # Accumulate losses
-            policy_losses.append(policy_loss.item())
-            value_losses.append(value_loss.item())
-            entropy_losses.append(entropy_loss.item())
+        explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
 
-        # Log average losses
-        self.logger.record("train/policy_loss", np.mean(policy_losses))
-        self.logger.record("train/value_loss", np.mean(value_losses))
-        self.logger.record("train/entropy_loss", np.mean(entropy_losses))
+        self._n_updates += 1
+        self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+        self.logger.record("train/explained_variance", explained_var)
+        self.logger.record("train/entropy_loss", entropy_loss.item())
+        self.logger.record("train/policy_loss", policy_loss.item())
+        self.logger.record("train/value_loss", value_loss.item())
+        if hasattr(self.policy, "log_std"):
+            self.logger.record("train/std", torch.exp(self.policy.log_std).mean().item())
         if self.ewc is not None:
             self.logger.record("train/ewc_penalty", np.mean(ewc_penalties))
+
+
 
 class Deterministic_EWC:
     def __init__(self, agent, dataloader, lambda_=0.4):
