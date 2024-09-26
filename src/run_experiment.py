@@ -168,5 +168,7 @@ def run_experiment():
 
     update_combination_status(iteration, "completed", csv_file='combinations-viking.csv')
 
+    return iteration
+
 if __name__ == "__main__":
     run_experiment()

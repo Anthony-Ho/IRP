@@ -29,7 +29,7 @@ iteration,group1,group2,status
 27,"['ABT', 'BAC', 'DIS', 'HD', 'JPM', 'KO', 'MA', 'MRK', 'PEP', 'PFE', 'PG', 'T', 'VZ', 'WMT']","['AAPL', 'ADBE', 'AMZN', 'BRK-B', 'CSCO', 'GOOGL', 'INTC', 'JNJ', 'MSFT', 'NFLX', 'NVDA', 'UNH', 'V', 'XOM']",completed
 28,"['AAPL', 'ABT', 'HD', 'INTC', 'JNJ', 'MA', 'NVDA', 'PEP', 'PFE', 'PG', 'UNH', 'VZ', 'WMT', 'XOM']","['ADBE', 'AMZN', 'BAC', 'BRK-B', 'CSCO', 'DIS', 'GOOGL', 'JPM', 'KO', 'MRK', 'MSFT', 'NFLX', 'T', 'V']",completed
 29,"['AAPL', 'ADBE', 'BRK-B', 'CSCO', 'DIS', 'HD', 'INTC', 'KO', 'MRK', 'NFLX', 'NVDA', 'PEP', 'V', 'VZ']","['ABT', 'AMZN', 'BAC', 'GOOGL', 'JNJ', 'JPM', 'MA', 'MSFT', 'PFE', 'PG', 'T', 'UNH', 'WMT', 'XOM']",completed
-30,"['AAPL', 'ABT', 'AMZN', 'BRK-B', 'CSCO', 'DIS', 'INTC', 'JNJ', 'JPM', 'MA', 'NFLX', 'PEP', 'PFE', 'V']","['ADBE', 'BAC', 'GOOGL', 'HD', 'KO', 'MRK', 'MSFT', 'NVDA', 'PG', 'T', 'UNH', 'VZ', 'WMT', 'XOM']",untrained
+30,"['AAPL', 'ABT', 'AMZN', 'BRK-B', 'CSCO', 'DIS', 'INTC', 'JNJ', 'JPM', 'MA', 'NFLX', 'PEP', 'PFE', 'V']","['ADBE', 'BAC', 'GOOGL', 'HD', 'KO', 'MRK', 'MSFT', 'NVDA', 'PG', 'T', 'UNH', 'VZ', 'WMT', 'XOM']",training
 31,"['AMZN', 'BAC', 'BRK-B', 'GOOGL', 'HD', 'INTC', 'JPM', 'KO', 'MRK', 'NFLX', 'NVDA', 'PEP', 'WMT', 'XOM']","['AAPL', 'ABT', 'ADBE', 'CSCO', 'DIS', 'JNJ', 'MA', 'MSFT', 'PFE', 'PG', 'T', 'UNH', 'V', 'VZ']",untrained
 32,"['AAPL', 'ABT', 'BAC', 'HD', 'JNJ', 'JPM', 'KO', 'MSFT', 'NFLX', 'NVDA', 'PEP', 'PFE', 'V', 'VZ']","['ADBE', 'AMZN', 'BRK-B', 'CSCO', 'DIS', 'GOOGL', 'INTC', 'MA', 'MRK', 'PG', 'T', 'UNH', 'WMT', 'XOM']",untrained
 33,"['ABT', 'AMZN', 'CSCO', 'HD', 'JPM', 'KO', 'MRK', 'MSFT', 'NFLX', 'NVDA', 'UNH', 'V', 'VZ', 'WMT']","['AAPL', 'ADBE', 'BAC', 'BRK-B', 'DIS', 'GOOGL', 'INTC', 'JNJ', 'MA', 'PEP', 'PFE', 'PG', 'T', 'XOM']",untrained
