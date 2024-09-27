@@ -129,7 +129,7 @@ def train_ewc_agents(model_dir, train_df1, train_df2, group1, group2, iteration,
     train_group1_dataloader = create_dataloader(
         agent=ppo_model_group1,
         env=group1_env,
-        desired_num_observations=10000,
+        desired_num_observations=len(train_df1),
         batch_size=64,
         use_agent_policy=True
     )
@@ -155,7 +155,7 @@ def train_ewc_agents(model_dir, train_df1, train_df2, group1, group2, iteration,
     train_group1_dataloader = create_dataloader(
         agent=a2c_model_group1,
         env=group1_env,
-        desired_num_observations=10000,
+        desired_num_observations=len(train_df1),
         batch_size=64,
         use_agent_policy=True
     )
@@ -181,7 +181,7 @@ def train_ewc_agents(model_dir, train_df1, train_df2, group1, group2, iteration,
     train_group1_dataloader = create_dataloader(
         agent=ddpg_model_group1,
         env=group1_env,
-        desired_num_observations=10000,
+        desired_num_observations=len(train_df1),
         batch_size=64,
         use_agent_policy=True
     )
