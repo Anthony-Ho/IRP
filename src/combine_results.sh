@@ -22,6 +22,7 @@ fi
 for result_file in $RESULTS_DIR/results-viking-*.csv; do
     echo "Adding $result_file to combined results..."
     tail -n +2 "$result_file" >> "$COMBINED_RESULTS_FILE"
+    rm "$result_file"
 done
 
 echo "Results combined into $COMBINED_RESULTS_FILE"
