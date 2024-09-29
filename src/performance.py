@@ -3,6 +3,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+def validate_agent_performance(agent, env, episodes=1):
+    """
+    Test the agent on the given environment for a number of episodes.
+    Return the average cumulative return or other metrics.
+    """
+    all_rewards = []
+    for _ in range(episodes):
+        obs = env.reset()
+        done = False
+        total_reward = 0
+        while not done:
+            action, _ = agent.predict(obs)
+            obs, reward, done, _, _ = env.step(action)
+            total_reward += reward
+        all_rewards.append(total_reward)
+    
+    # Return the average performance metric (e.g., cumulative return)
+    return np.mean(all_rewards)
+
 def test_agent_performance(agent, env):
     """
     Test the agent on the test dataset and track portfolio values indexed by date.

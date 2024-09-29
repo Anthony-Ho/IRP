@@ -383,3 +383,25 @@ class PortfolioAllocationEnv(gym.Env):
           log_df.to_csv(self.logfile, mode='a', header=not pd.io.common.file_exists(self.logfile), index=False)
 
       return episode_log
+
+class PortfolioAllocationEnvLogReturn(PortfolioAllocationEnv):
+    """
+    Inherits from PortfolioAllocationEnv and overrides _calculate_reward()
+    to return the daily log return of the portfolio.
+    """
+    def _calculate_reward(self):
+        """
+        Calculate the daily log return based on the portfolio value.
+        """
+        # Ensure that there is a previous portfolio value to compare
+        if len(self._portfolio_value_memory) < 2:
+            return 0  # No log return for the first step
+        
+        # Portfolio value at the current and previous step
+        current_value = self.portfolio_value
+        previous_value = self._portfolio_value_memory[-2]
+
+        # Calculate log return
+        log_return = np.log(current_value / previous_value)
+
+        return log_return
