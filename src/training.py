@@ -314,9 +314,10 @@ def train_ewc_agents(model_dir, train_df1, train_df2, group1, group2, iteration,
 
 
 # Function to train PPO, A2C, and DDPG agents using the Buffer Replay strategy
-def train_replay_agents(model_dir, train_df1, train_df2, group1, group2, iteration, PPO_PARAMS, A2C_PARAMS, DDPG_PARAMS):
-    from stable_baselines3 import PPO, A2C, DDPG
-
+def train_replay_agents(model_dir, train_df1, train_df2, group1, group2, iteration, PPO_PARAMS, A2C_PARAMS, DDPG_PARAMS,
+                         transaction_fee_rate=0.001, initial_balance=100000, validation_df=None, 
+                         validation_interval=10, patience=3, total_timesteps=[50000, 80000, 50000], 
+                         env_class=PortfolioAllocationEnv):
     """
     Train PPO, A2C, and DDPG agents using the Buffer Replay strategy.
 
@@ -331,6 +332,14 @@ def train_replay_agents(model_dir, train_df1, train_df2, group1, group2, iterati
     - A2C_PARAMS: Hyperparameters for training the A2C agent.
     - DDPG_PARAMS: Hyperparameters for training the DDPG agent.
     - lambda_ewc: Regularization strength for Buffer Replay.
+    - transaction_fee_rate: Transaction fee rate for the environment.
+    - initial_balance: Initial balance for the portfolio.
+    - validation_df: DataFrame for validation (optional).
+    - validation_interval: Number of validation steps between each interval (for early stopping).
+    - patience: Early stopping patience (number of intervals without improvement before stopping).
+    - total_timesteps: List of timesteps for PPO, A2C, and DDPG agents [PPO_timesteps, A2C_timesteps, DDPG_timesteps].
+    - lambda_ewc: Regularization strength for EWC.
+    - env_class: The environment class to be used (default is PortfolioAllocationEnv for absolute returns).
 
     Returns:
     - replay_ppo, replay_a2c, replay_ddpg: Trained PPO, A2C, and DDPG models using Buffer Replay.
@@ -345,15 +354,20 @@ def train_replay_agents(model_dir, train_df1, train_df2, group1, group2, iterati
         train_df2=train_df2,
         tic_list_group1=group1,
         tic_list_group2=group2,
-        total_timesteps=50000,
+        total_timesteps=total_timesteps[0],
         agent_class=PPO,
         agent_filename=f"ppo_{baseline_name}",
         model_dir=model_dir,
         model_filename=f"ppo_{group_name}",
+        params=PPO_PARAMS,
         reinforcement_interval=15000,
         reinforcement_steps=3000,
-        transaction_fee_rate=0.001,
-        initial_balance=100000
+        transaction_fee_rate=transaction_fee_rate,
+        initial_balance=initial_balance,
+        validation_df=validation_df,
+        validation_interval=validation_interval,
+        patience=patience,
+        env_class=env_class
     )
 
     replay_a2c = perform_replay_training(
@@ -361,15 +375,20 @@ def train_replay_agents(model_dir, train_df1, train_df2, group1, group2, iterati
         train_df2=train_df2,
         tic_list_group1=group1,
         tic_list_group2=group2,
-        total_timesteps=80000,
+        total_timesteps=total_timesteps[1],
         agent_class=A2C,
         agent_filename=f"a2c_{baseline_name}",
         model_dir=model_dir,
         model_filename=f"a2c_{group_name}",
+        params=A2C_PARAMS,
         reinforcement_interval=15000,
         reinforcement_steps=3000,
-        transaction_fee_rate=0.001,
-        initial_balance=100000
+        transaction_fee_rate=transaction_fee_rate,
+        initial_balance=initial_balance,
+        validation_df=validation_df,
+        validation_interval=validation_interval,
+        patience=patience,
+        env_class=env_class
     )
 
     replay_ddpg = perform_replay_training(
@@ -377,15 +396,20 @@ def train_replay_agents(model_dir, train_df1, train_df2, group1, group2, iterati
         train_df2=train_df2,
         tic_list_group1=group1,
         tic_list_group2=group2,
-        total_timesteps=50000,
+        total_timesteps=total_timesteps[2],
         agent_class=DDPG,
         agent_filename=f"ddpg_{baseline_name}",
         model_dir=model_dir,
         model_filename=f"ddpg_{group_name}",
+        params=DDPG_PARAMS,
         reinforcement_interval=15000,
         reinforcement_steps=3000,
-        transaction_fee_rate=0.001,
-        initial_balance=100000
+        transaction_fee_rate=transaction_fee_rate,
+        initial_balance=initial_balance,
+        validation_df=validation_df,
+        validation_interval=validation_interval,
+        patience=patience,
+        env_class=env_class
     )
 
     return replay_ppo, replay_a2c, replay_ddpg

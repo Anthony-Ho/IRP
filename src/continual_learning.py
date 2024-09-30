@@ -12,6 +12,7 @@ from gymnasium import spaces
 
 # Local Import
 from envs import PortfolioAllocationEnv
+from performance import validate_agent_performance
 
 def create_dataloader(agent, env, desired_num_observations=10000, batch_size=64, use_agent_policy=True):
     """
@@ -438,7 +439,8 @@ class EWC_DDPG(DDPG):
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 # Function to create a new environment with randomly selected 1-year data from group1
-def create_group1_env_random(group1_df, tic_list, num_days=252, transaction_fee_rate=0.001, initial_balance=100000):
+def create_group1_env_random(group1_df, tic_list, num_days=252, transaction_fee_rate=0.001, initial_balance=100000,
+                             env_class=PortfolioAllocationEnv):
     group1_df = group1_df.sort_index()
     unique_date = group1_df.index.get_level_values('Date').unique()
     # Ensure there are at least 252 days available
@@ -454,7 +456,7 @@ def create_group1_env_random(group1_df, tic_list, num_days=252, transaction_fee_
     group1_subset = group1_df.loc[(slice(selected_dates[0], selected_dates[-1]), slice(None))]
 
     # Create a new environment with the selected data subset
-    group1_env = PortfolioAllocationEnv(
+    group1_env = env_class(
         df=group1_subset, 
         initial_balance=initial_balance, 
         tic_list=tic_list, 
@@ -467,8 +469,9 @@ def create_group1_env_random(group1_df, tic_list, num_days=252, transaction_fee_
     return group1_env
 
 # Function to create the group2 environment
-def create_group2_env(train_df2, tic_list, transaction_fee_rate=0.001, initial_balance=100000):
-    group2_env = PortfolioAllocationEnv(
+def create_group2_env(train_df2, tic_list, transaction_fee_rate=0.001, initial_balance=100000,
+                      env_class=PortfolioAllocationEnv):
+    group2_env = env_class(
         df=train_df2, 
         initial_balance=initial_balance, 
         tic_list=tic_list, 
@@ -484,8 +487,9 @@ from datetime import datetime
 
 # Main function to perform training and save the model
 def perform_replay_training(train_df1, train_df2, tic_list_group1, tic_list_group2, total_timesteps, 
-                     agent_class, agent_filename, model_dir, model_filename,
-                    reinforcement_interval=15000, reinforcement_steps=3000, transaction_fee_rate=0.001, initial_balance=100000):
+                     agent_class, agent_filename, model_dir, model_filename, params,
+                    reinforcement_interval=15000, reinforcement_steps=3000, transaction_fee_rate=0.001, initial_balance=100000,
+                    validation_df=None, validation_interval=10, patience=3, env_class=PortfolioAllocationEnv):
     """
     Trains an RL agent on group2 data with periodic reinforcement on group1 data.
 
@@ -497,73 +501,127 @@ def perform_replay_training(train_df1, train_df2, tic_list_group1, tic_list_grou
     - total_timesteps (int): Total number of timesteps for training.
     - agent_class (class): RL agent class from Stable Baselines3 (e.g., DDPG, A2C, PPO).
     - model_dir (str): Directory to save the trained models.
+    - params: parameter for agent model.
     - reinforcement_interval (int): Timesteps to train on group2 before reinforcement.
     - reinforcement_steps (int): Timesteps to train on group1 during reinforcement.
     - transaction_fee_rate (float): Transaction fee rate for the environment.
     - initial_balance (int): Initial balance for the portfolio.
+    - env_class: The environment class to be used (default is PortfolioAllocationEnv for absolute returns).
 
     Returns:
-    - None
+    - The trained agent.
     """
     # Ensure the model directory exists
     os.makedirs(model_dir, exist_ok=True)
 
+    best_val_performance = -float('inf')
+    best_model = None
+    epochs_without_improvement = 0
+    early_stop = False
+
     # Create the group2 environment
-    group2_env = create_group2_env(train_df2, tic_list_group2, transaction_fee_rate, initial_balance)
+    group2_env = create_group2_env(train_df2, tic_list_group2, transaction_fee_rate, initial_balance, 
+                                   env_class=env_class)
+    
+    # f validation_df is provided, create the validation environment
+    val_env = None
+    if validation_df is not None:
+        val_env = env_class(df=validation_df, initial_balance=initial_balance, tic_list=tic_list_group2, transaction_fee_rate=transaction_fee_rate)
 
     # Initialize the agent with group2 environment
     group1_model_path = os.path.join(model_dir, agent_filename)
     agent = agent_class.load(group1_model_path, env=group2_env)
+    timesteps_between_validation = total_timesteps // validation_interval
 
+    # Step 1: Create model switching milestones
+    model_milestones = []
     timesteps_done = 0
-    reinforcement_count = 0
-
-    # Loop until the total timesteps are reached
     while timesteps_done < total_timesteps:
-        # Determine the remaining timesteps to avoid overshooting
-        remaining_timesteps = total_timesteps - timesteps_done
-        current_interval = min(reinforcement_interval, remaining_timesteps)
+        # Add a milestone for training on group2
+        model_milestones.append((timesteps_done, "model2"))
+        # Add a milestone for training on group1 after reinforcement_interval
+        timesteps_done += reinforcement_interval
+        if timesteps_done < total_timesteps:
+            model_milestones.append((timesteps_done, "model1"))
+            # Train on group1 for reinforcement_steps
+            timesteps_done += reinforcement_steps
 
-        # Train on group2
-        print(f"Training on group2 for {current_interval} timesteps.")
-        if (timesteps_done == 0): #Reset the Number of Timesteps at begining of training
-            agent.learn(total_timesteps=current_interval, reset_num_timesteps=True)
+    # Step 2: Create validation milestones 
+    # Validation starts only at least one Group1 memory is replayed.
+    if val_env is not None:
+        validation_milestones = []
+        for t in range(reinforcement_interval+reinforcement_steps, total_timesteps, timesteps_between_validation):
+            validation_milestones.append((t, "validation"))
+
+        # Step 3: Merge and sort milestones by timestep
+        milestones = sorted(model_milestones + validation_milestones, key=lambda x: x[0])
+    else:
+        milestones = model_milestones
+
+    # Step 4: Go thru the milestone interlace training and validation
+    for i in range(len(milestones)):
+        current_timestep, action = milestones[i]
+        if (i == (len(milestones)-1)):
+            next_timestep = total_timesteps
         else:
-            agent.learn(total_timesteps=current_interval, reset_num_timesteps=False)
-        timesteps_done += current_interval
+            next_timestep, _ = milestones[i + 1]
+        timesteps_to_learn = next_timestep - current_timestep
 
-        # Check if total_timesteps are reached
-        if timesteps_done >= total_timesteps:
-            break
+        # Take the action either change envs or validataion
+        if (action == 'validation'):
+            print(f"Do Validation at {current_timestep}")
+            # Evaluate the agent on the validation environment
+            val_performance = validate_agent_performance(agent, val_env)
 
-        # Create a random group1 environment for reinforcement
-        try:
-            random_group1_env = create_group1_env_random(
-                train_df1, 
-                tic_list_group1,
-                num_days=int(reinforcement_steps/10), 
-                transaction_fee_rate=transaction_fee_rate, 
-                initial_balance=initial_balance
-            )
-        except ValueError as e:
-            print(f"Error creating group1 environment: {e}")
-            break
+            # Check for improvement
+            if val_performance > best_val_performance:
+                best_val_performance = val_performance
+                best_model = agent  # Save best model
+                epochs_without_improvement = 0
+            else:
+                epochs_without_improvement += 1
 
-        # Set the new environment for the agent
-        agent.set_env(random_group1_env)
+            # Early stopping condition
+            if epochs_without_improvement >= patience:
+                early_stop = True
+                print(f"Early stopping at iteration {current_timestep}. Best validation performance: {best_val_performance}")
+                break
+        elif (action == 'model2'):
+            print(f"Switching back to group2 environment at timestep {current_timestep}.")
+            agent.set_env(group2_env)
+        elif (action == 'model1'):
+            # Create a random group1 environment for reinforcement
+            print(f"Switching to group1 environment at timestep {current_timestep}.")
+            try:
+                random_group1_env = create_group1_env_random(
+                    train_df1, 
+                    tic_list_group1,
+                    num_days=int(reinforcement_steps/10), 
+                    transaction_fee_rate=transaction_fee_rate, 
+                    initial_balance=initial_balance,
+                    env_class=env_class
+                )
+            except ValueError as e:
+                print(f"Error creating group1 environment: {e}")
+                break
 
-        # Reinforce group1 knowledge
-        reinforcement_steps_current = min(reinforcement_steps, total_timesteps - timesteps_done)
-        print(f"Reinforcing group1 memory for {reinforcement_steps_current} timesteps at timestep {timesteps_done}")
-        agent.learn(total_timesteps=reinforcement_steps_current, reset_num_timesteps=False)
-        timesteps_done += reinforcement_steps_current
+            # Set the new environment for the agent
+            agent.set_env(random_group1_env)
 
-        # Switch back to group2 environment
-        agent.set_env(group2_env)
-        reinforcement_count += 1
+        # Train between the current and next milestone
+        print(f"Training for {timesteps_to_learn} timesteps.")
+        if (current_timestep == 0):
+            agent.learn(total_timesteps=timesteps_to_learn, reset_num_timesteps=True)
+        elif (timesteps_to_learn > 0):
+            agent.learn(total_timesteps=timesteps_to_learn, reset_num_timesteps=False)
 
     # Final model saving
     final_model_path = os.path.join(model_dir, model_filename)
-    agent.save(final_model_path)
-    print(f"Final model saved to {final_model_path}")
-    return agent
+    if early_stop:
+        best_model.save(final_model_path)
+        print(f"Early Stopped model saved to {final_model_path}")
+        return best_model
+    else:
+        agent.save(final_model_path)
+        print(f"Final model saved to {final_model_path}")
+        return agent

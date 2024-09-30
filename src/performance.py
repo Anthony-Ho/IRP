@@ -3,20 +3,34 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-def validate_agent_performance(agent, env, episodes=1):
+def validate_agent_performance(agent, env, episodes=1, is_vec_env=False):
     """
     Test the agent on the given environment for a number of episodes.
     Return the average cumulative return or other metrics.
+    If the environment is a VecEnv, set is_vec_env=True.
     """
     all_rewards = []
+
     for _ in range(episodes):
-        obs = env.reset()
+        if is_vec_env:
+            obs = env.reset()  # VecEnv reset (no tuple)
+        else:
+            obs, _ = env.reset()  # Gym API reset
+
         done = False
         total_reward = 0
+
         while not done:
             action, _ = agent.predict(obs)
-            obs, reward, done, _, _ = env.step(action)
+            if is_vec_env:
+                obs, reward, done, info = env.step(action)  # VecEnv step (no tuple)
+                done = done[0]  # For VecEnv, done is a list/array
+                reward = reward[0]  # For VecEnv, reward is a list/array
+            else:
+                obs, reward, done, _, _ = env.step(action)  # Gym API step
+
             total_reward += reward
+
         all_rewards.append(total_reward)
     
     # Return the average performance metric (e.g., cumulative return)

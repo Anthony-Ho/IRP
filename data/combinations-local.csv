@@ -50,10 +50,12 @@ iteration,group1,group2,status
 48,"['AAPL', 'AMZN', 'BRK-B', 'CSCO', 'GOOGL', 'INTC', 'JNJ', 'JPM', 'KO', 'NFLX', 'NVDA', 'PFE', 'PG', 'UNH']","['ABT', 'ADBE', 'BAC', 'DIS', 'HD', 'MA', 'MRK', 'MSFT', 'PEP', 'T', 'V', 'VZ', 'WMT', 'XOM']",completed
 49,"['ABT', 'AMZN', 'BAC', 'BRK-B', 'CSCO', 'DIS', 'JPM', 'KO', 'MRK', 'MSFT', 'NVDA', 'PEP', 'WMT', 'XOM']","['AAPL', 'ADBE', 'GOOGL', 'HD', 'INTC', 'JNJ', 'MA', 'NFLX', 'PFE', 'PG', 'T', 'UNH', 'V', 'VZ']",completed
 50,"['ADBE', 'AMZN', 'BAC', 'JNJ', 'JPM', 'NFLX', 'NVDA', 'PEP', 'PFE', 'T', 'UNH', 'V', 'WMT', 'XOM']","['AAPL', 'ABT', 'BRK-B', 'CSCO', 'DIS', 'GOOGL', 'HD', 'INTC', 'KO', 'MA', 'MRK', 'MSFT', 'PG', 'VZ']",completed
-51,"['ADBE', 'AMZN', 'BRK-B', 'GOOGL', 'JPM', 'KO', 'MA', 'MRK', 'MSFT', 'NVDA', 'PEP', 'T', 'V', 'VZ']","['AAPL', 'ABT', 'BAC', 'CSCO', 'DIS', 'HD', 'INTC', 'JNJ', 'NFLX', 'PFE', 'PG', 'UNH', 'WMT', 'XOM']",untrained
-52,"['AAPL', 'ABT', 'ADBE', 'INTC', 'JNJ', 'KO', 'MA', 'MRK', 'MSFT', 'NFLX', 'PEP', 'PG', 'WMT', 'XOM']","['AMZN', 'BAC', 'BRK-B', 'CSCO', 'DIS', 'GOOGL', 'HD', 'JPM', 'NVDA', 'PFE', 'T', 'UNH', 'V', 'VZ']",untrained
-53,"['AAPL', 'BAC', 'BRK-B', 'CSCO', 'DIS', 'HD', 'JNJ', 'MRK', 'MSFT', 'PFE', 'UNH', 'V', 'VZ', 'WMT']","['ABT', 'ADBE', 'AMZN', 'GOOGL', 'INTC', 'JPM', 'KO', 'MA', 'NFLX', 'NVDA', 'PEP', 'PG', 'T', 'XOM']",untrained
-54,"['ADBE', 'BAC', 'DIS', 'HD', 'JNJ', 'JPM', 'MA', 'NVDA', 'PG', 'UNH', 'V', 'VZ', 'WMT', 'XOM']","['AAPL', 'ABT', 'AMZN', 'BRK-B', 'CSCO', 'GOOGL', 'INTC', 'KO', 'MRK', 'MSFT', 'NFLX', 'PEP', 'PFE', 'T']",untrained
+51,"['ADBE', 'AMZN', 'BRK-B', 'GOOGL', 'JPM', 'KO', 'MA', 'MRK', 'MSFT', 'NVDA', 'PEP', 'T', 'V', 'VZ']","['AAPL', 'ABT', 'BAC', 'CSCO', 'DIS', 'HD', 'INTC', 'JNJ', 'NFLX', 'PFE', 'PG', 'UNH', 'WMT', 'XOM']",completed
+52,"['AAPL', 'ABT', 'ADBE', 'INTC', 'JNJ', 'KO', 'MA', 'MRK', 'MSFT', 'NFLX', 'PEP', 'PG', 'WMT', 'XOM']","['AMZN', 'BAC', 'BRK-B', 'CSCO', 'DIS', 'GOOGL', 'HD', 'JPM', 'NVDA', 'PFE', 'T', 'UNH', 'V', 'VZ']","untrained
+"
+53,"['AAPL', 'BAC', 'BRK-B', 'CSCO', 'DIS', 'HD', 'JNJ', 'MRK', 'MSFT', 'PFE', 'UNH', 'V', 'VZ', 'WMT']","['ABT', 'ADBE', 'AMZN', 'GOOGL', 'INTC', 'JPM', 'KO', 'MA', 'NFLX', 'NVDA', 'PEP', 'PG', 'T', 'XOM']","untrained
+"
+54,"['ADBE', 'BAC', 'DIS', 'HD', 'JNJ', 'JPM', 'MA', 'NVDA', 'PG', 'UNH', 'V', 'VZ', 'WMT', 'XOM']","['AAPL', 'ABT', 'AMZN', 'BRK-B', 'CSCO', 'GOOGL', 'INTC', 'KO', 'MRK', 'MSFT', 'NFLX', 'PEP', 'PFE', 'T']",completed
 55,"['AAPL', 'ABT', 'BAC', 'BRK-B', 'JNJ', 'JPM', 'KO', 'MA', 'MSFT', 'PEP', 'PG', 'UNH', 'VZ', 'WMT']","['ADBE', 'AMZN', 'CSCO', 'DIS', 'GOOGL', 'HD', 'INTC', 'MRK', 'NFLX', 'NVDA', 'PFE', 'T', 'V', 'XOM']",untrained
 56,"['ABT', 'BRK-B', 'DIS', 'GOOGL', 'HD', 'JPM', 'KO', 'MA', 'MSFT', 'PEP', 'UNH', 'VZ', 'WMT', 'XOM']","['AAPL', 'ADBE', 'AMZN', 'BAC', 'CSCO', 'INTC', 'JNJ', 'MRK', 'NFLX', 'NVDA', 'PFE', 'PG', 'T', 'V']",untrained
 57,"['AAPL', 'ABT', 'ADBE', 'BAC', 'BRK-B', 'DIS', 'HD', 'INTC', 'JPM', 'KO', 'PFE', 'PG', 'T', 'VZ']","['AMZN', 'CSCO', 'GOOGL', 'JNJ', 'MA', 'MRK', 'MSFT', 'NFLX', 'NVDA', 'PEP', 'UNH', 'V', 'WMT', 'XOM']",untrained
