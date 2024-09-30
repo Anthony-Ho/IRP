@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from stable_baselines3 import PPO, A2C, DDPG
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.utils import polyak_update, explained_variance
+from stable_baselines3.common.vec_env import DummyVecEnv
 import torch.nn.functional as F
 import gymnasium as gym
 import random
@@ -319,7 +320,6 @@ class EWC_A2C(A2C):
             self.logger.record("train/ewc_penalty", np.mean(ewc_penalties))
 
 
-
 class Deterministic_EWC:
     def __init__(self, agent, dataloader, lambda_=0.4):
         self.agent = agent  # The pre-trained agent
@@ -436,7 +436,6 @@ class EWC_DDPG(DDPG):
             self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
 
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 # Function to create a new environment with randomly selected 1-year data from group1
 def create_group1_env_random(group1_df, tic_list, num_days=252, transaction_fee_rate=0.001, initial_balance=100000,
