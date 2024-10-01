@@ -17,7 +17,7 @@ from performance import test_agent_performance, calculate_performance_metrics
 # Main Experiment Loop with incremental CSV writing
 def experiment_iteration(model_dir, train_df1, train_df2, val_df1, val_df2, test_df1, test_df2, group1, group2, iteration, 
                          PPO_PARAMS, A2C_PARAMS, DDPG_PARAMS, results_file, returns_file,
-                         validation_interval=10, patience=3, total_timesteps=[50000, 80000, 50000], 
+                         validation_interval=10, patience=3, total_timesteps=[100000, 80000, 50000], 
                          env_class=PortfolioAllocationEnv):
     """
     Perform an experiment iteration by training PPO, A2C, and DDPG agents using Baseline, Naive, EWC, and Replay Buffer strategies.
@@ -160,8 +160,8 @@ def run_experiment_with_validation():
     """
     iteration, group1, group2, df1, df2 = split_collect_stock_data_from_csv(tic_list=tic_list, combination_file='combinations-viking.csv')
 
-    results_file = os.path.join(result_dir, f'results-local-{iteration}.csv')
-    returns_file = os.path.join(result_dir, f'returns-local-{iteration}.csv')
+    results_file = os.path.join(result_dir, f'results-viking-{iteration}.csv')
+    returns_file = os.path.join(result_dir, f'returns-viking-{iteration}.csv')
 
     # Split the dataset based on the 'Date' or first level of the multi-index
     train_df1 = df1.loc[(df1.index.get_level_values(0) >= '2010-01-01') & (df1.index.get_level_values(0) <= '2019-12-31')]
@@ -179,7 +179,7 @@ def run_experiment_with_validation():
         env_class=PortfolioAllocationEnvLogReturn
     )
 
-    update_combination_status(iteration, "completed", csv_file='combinations-local.csv')
+    update_combination_status(iteration, "completed", csv_file='combinations-viking.csv')
 
     return iteration
 

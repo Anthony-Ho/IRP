@@ -8,6 +8,7 @@ import sys
 # Local Import
 from experiment_config import tic_list, result_dir, model_dir
 from run_experiment import run_experiment
+from run_experiment_with_validation import run_experiment_with_validation
 
 archive_dir = '../archives'
 
@@ -44,7 +45,7 @@ def run_controller(num_iterations):
     """
     for i in range(num_iterations):
         # Call run_experiment() to run the experiment and get the iteration number
-        iteration = run_experiment()
+        iteration = run_experiment_with_validation()
 
         if iteration is None:
             print("No more combinations left to run.")
