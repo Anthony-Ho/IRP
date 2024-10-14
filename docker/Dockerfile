@@ -1,9 +1,8 @@
 # Use the official TensorFlow Docker image with GPU support
-FROM tensorflow/tensorflow:latest-gpu
+FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime
 
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Europe/London
+# Set the working directory
+WORKDIR /workspace/IRP
 
 # Install necessary packages
 RUN apt-get update && \
@@ -15,34 +14,21 @@ RUN apt-get update && \
 # Upgrade pip
 RUN pip install --upgrade pip
 
-# Install PyTorch with CUDA support
-RUN pip install torch torchvision torchaudio
+# Copy the requirements file from your src directory and install dependencies
+COPY src/requirements.txt .
 
-# Copy requirements.txt to the working directory
-COPY ./requirements.txt /workspace/requirements.txt
+# Install Python packages required by your application
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Install dependencies from requirements.txt
-RUN pip install -r /workspace/requirements.txt
-
-# Install FinRL
-RUN pip3 install finrl
-
-# Install Jupyter Notebook
-RUN pip install jupyter
-
-# Install Avalanche
-RUN pip install avalanche-lib
-RUN pip install avalanche-lib[rl]
-
-# Clean up
-RUN apt-get clean
-
-# Set the working directory
-WORKDIR /workspace
+# Copy the entire source directory into the container
+COPY src/ /workspace/IRP/src
+COPY data/ /workspace/IRP/data
 
 # Expose a port for Jyputer Notebook
 EXPOSE 8888
 
-# Define the default command
-CMD ["bash"]
-# CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''"]
+# Change the working directory to /app/src
+WORKDIR /workspace/IRP/src
+
+# Set an entrypoint to run the experiment script from within /app/src
+CMD ["python3", "run_experiment_with_validation.py"]
