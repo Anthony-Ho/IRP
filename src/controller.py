@@ -45,7 +45,7 @@ def run_controller(num_iterations):
     """
     for i in range(num_iterations):
         # Call run_experiment() to run the experiment and get the iteration number
-        iteration = run_experiment_with_validation()
+        iteration = run_experiment_with_validation(combination_file='combinations-viking-retest.csv')
 
         if iteration is None:
             print("No more combinations left to run.")

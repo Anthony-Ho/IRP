@@ -152,13 +152,13 @@ def experiment_iteration(model_dir, train_df1, train_df2, val_df1, val_df2, test
     else:
         returns_df.to_csv(returns_file, index=False, mode='a', header=False)  # Append without writing header
 
-def run_experiment_with_validation():
+def run_experiment_with_validation(combination_file='conbinsations.csv'):
     """
     This is the main loop to run the experiment once.
     12 models (Baslein, Naive, EWC and Reply on PPO, A2C and DDPF) are trained
     24 tests (on Group 1 and Group 2 test data for 12 models) are done.
     """
-    iteration, group1, group2, df1, df2 = split_collect_stock_data_from_csv(tic_list=tic_list, combination_file='combinations-viking.csv')
+    iteration, group1, group2, df1, df2 = split_collect_stock_data_from_csv(tic_list=tic_list, combination_file=combination_file)
 
     results_file = os.path.join(result_dir, f'results-viking-{iteration}.csv')
     returns_file = os.path.join(result_dir, f'returns-viking-{iteration}.csv')
