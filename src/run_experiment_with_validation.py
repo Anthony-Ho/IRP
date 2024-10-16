@@ -179,7 +179,7 @@ def run_experiment_with_validation(combination_file='conbinsations.csv'):
         env_class=PortfolioAllocationEnvLogReturn
     )
 
-    update_combination_status(iteration, "completed", csv_file='combinations-viking.csv')
+    update_combination_status(iteration, "completed", csv_file=combination_file)
 
     return iteration
 
