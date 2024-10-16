@@ -1,6 +1,7 @@
 # Assuming the code structure in src/
 import sys
 import os
+import argparse
 import pandas as pd
 
 # Add src/ to the system path
@@ -152,13 +153,13 @@ def experiment_iteration(model_dir, train_df1, train_df2, val_df1, val_df2, test
     else:
         returns_df.to_csv(returns_file, index=False, mode='a', header=False)  # Append without writing header
 
-def run_experiment_with_validation():
+def run_experiment_with_validation(combination_file='combinartions.csv'):
     """
     This is the main loop to run the experiment once.
     12 models (Baslein, Naive, EWC and Reply on PPO, A2C and DDPF) are trained
     24 tests (on Group 1 and Group 2 test data for 12 models) are done.
     """
-    iteration, group1, group2, df1, df2 = split_collect_stock_data_from_csv(tic_list=tic_list, combination_file='combinations-viking.csv')
+    iteration, group1, group2, df1, df2 = split_collect_stock_data_from_csv(tic_list=tic_list, combination_file=combination_file)
 
     results_file = os.path.join(result_dir, f'results-viking-{iteration}.csv')
     returns_file = os.path.join(result_dir, f'returns-viking-{iteration}.csv')
@@ -179,9 +180,13 @@ def run_experiment_with_validation():
         env_class=PortfolioAllocationEnvLogReturn
     )
 
-    update_combination_status(iteration, "completed", csv_file='combinations-viking.csv')
+    update_combination_status(iteration, "completed", csv_file=combination_file)
 
     return iteration
 
 if __name__ == "__main__":
-    run_experiment_with_validation()
+    parser = argparse.ArgumentParser(description="Run the experiment with optional parameters.")
+    parser.add_argument('--combination_file', type=str, default='combinations.csv', help="Path to the combination file.")
+    args = parser.parse_args()
+
+    run_experiment_with_validation(combination_file=args.combination_file)

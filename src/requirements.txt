@@ -2,7 +2,7 @@ stable-baselines3[extra]
 gym
 yfinance
 pandas
-numpy
+numpy==1.26.3
 pandas_ta
 matplotlib
 scipy
