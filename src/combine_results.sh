@@ -1,13 +1,25 @@
 #!/bin/bash
 
-# Define paths
-RESULTS_DIR="../results"
+# Get the absolute path to the directory containing this script
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+RESULTS_DIR="$SCRIPT_DIR/../results"
 COMBINED_RESULTS_FILE="$RESULTS_DIR/combined_results.csv"
 
-# Combine all results into one CSV file
+# Check if results directory exists
+if [ ! -d "$RESULTS_DIR" ]; then
+    echo "Results directory $RESULTS_DIR does not exist. Exiting."
+    exit 1
+fi
+
+# Check for existing results files
+if [ -z "$(ls $RESULTS_DIR/results-viking-*.csv 2>/dev/null)" ]; then
+    echo "No results files found in $RESULTS_DIR. Exiting."
+    exit 1
+fi
+
 echo "Combining results..."
 
-# Check if combined results file already exists and remove it
+# Remove existing combined results file if it exists
 if [ -f "$COMBINED_RESULTS_FILE" ]; then
     rm "$COMBINED_RESULTS_FILE"
 fi
@@ -18,11 +30,13 @@ if [ -f "$first_file" ]; then
     head -n 1 "$first_file" > "$COMBINED_RESULTS_FILE"
 fi
 
-# Loop through all results-viking-*.csv files and append to the combined file (skipping the header)
+# Loop through all results files and append to the combined file (skipping the header)
 for result_file in $RESULTS_DIR/results-viking-*.csv; do
-    echo "Adding $result_file to combined results..."
-    tail -n +2 "$result_file" >> "$COMBINED_RESULTS_FILE"
-    rm "$result_file"
+    if [ -f "$result_file" ]; then
+        echo "Adding $result_file to combined results..."
+        tail -n +2 "$result_file" >> "$COMBINED_RESULTS_FILE"
+        rm -f "$result_file"
+    fi
 done
 
 echo "Results combined into $COMBINED_RESULTS_FILE"

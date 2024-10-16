@@ -31,4 +31,4 @@ EXPOSE 8888
 WORKDIR /workspace/IRP/src
 
 # Set an entrypoint to run the experiment script from within /app/src
-CMD ["python3", "run_experiment_with_validation.py"]
+ENTRYPOINT ["python3", "run_experiment_with_validation.py"]
