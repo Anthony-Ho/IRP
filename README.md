@@ -4,6 +4,7 @@
 
 This project explores the application of Continual Learning (CL) techniques to Reinforcement Learning (RL) agents in the context of portfolio optimization. Using RL algorithms (PPO, A2C, and DDPG) and CL strategies (Naive, EWC, Replay Buffer), this research evaluates the agents' adaptability and stability across different stock groups. This artefact includes the source code, Docker configurations, and supporting resources for reproducing the experiment.
 
+
 ## Project Structure
 ```plaintext
 .
@@ -11,6 +12,12 @@ This project explores the application of Continual Learning (CL) techniques to R
 ├── data/                        # Directory for stock data and combinations files
 ├── docker/                      # Docker configurations and Dockerfile
 ├── models/                      # Output directory for saved trained models
+├── report_assets/               # Directory to store tables and charts for the report
+│   ├── average_cumulative_returns.csv    # Table 1
+│   ├── std_dev_cumulative_returns.csv    # Table 1.1
+│   ├── plasticity_analysis.csv           # Table 2
+│   ├── stability_analysis.csv            # Table 3
+│   └── cumulative_return_boxplots.png    # Figure 1
 ├── results/                     # Output directory for experiment results
 ├── src/                         # Source code for running experiments
 │   ├── __init__.py
@@ -80,6 +87,25 @@ docker run --gpus all -it \
 **Running Multiple Iterations**
 
 The shell script `run_docker_experiment.sh` simplifies running multiple experiments in a loop. Adjust the number of iterations as needed.
+
+## Collecting and Analyzing Results
+
+After completing all experiment iterations, use the generate_report_asset.py script to aggregate and visualize performance metrics. This script will create summary tables and charts for easier analysis.
+
+### Instructions
+
+1. Run the Report Script:
+    - Execute the following command to process results and generate the report assets:
+        ```bash
+        python generate_report_asset.py --input_file results/combined_results.csv --output_dir report_assets
+        ```
+    - The output, including summary tables and visualizations, will be saved in the report_assets/ directory.
+
+2. Review Output Files:
+    - Key files include:
+      - `average_cumulative_returns.csv`: Average cumulative returns by strategy and model.
+      - `plasticity_analysis.csv` and `stability_analysis.csv`: Comparative analyses of adaptability and retention.
+      - `cumulative_return_boxplots.png`: Box plot of cumulative returns across strategies, with DJIA benchmark.
 
 ## Files and Resources
 - `requirements.txt`: List of dependencies for the Python environment.
