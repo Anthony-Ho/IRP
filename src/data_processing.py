@@ -177,7 +177,7 @@ def split_collect_stock_data_from_csv(tic_list, csv_file='dji_stock_data.csv', c
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
     # Get the next untrained combination of group1 and group2
-    iteration, group1, group2 = get_next_combination(combination_file)
+    iteration, group1, group2 = get_next_combination(tic_list, combination_file)
 
     # Create df1 and df2 based on the 'tic' index (ticker symbol)
     df = df.reset_index()
