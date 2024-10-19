@@ -160,7 +160,6 @@ def run_experiment_with_validation(combination_file='combinartions.csv'):
     24 tests (on Group 1 and Group 2 test data for 12 models) are done.
     """
     iteration, group1, group2, df1, df2 = split_collect_stock_data_from_csv(tic_list=tic_list, combination_file=combination_file)
-    iteration, group1, group2, df1, df2 = split_collect_stock_data_from_csv(tic_list=tic_list, combination_file=combination_file)
 
     results_file = os.path.join(result_dir, f'results-viking-{iteration}.csv')
     returns_file = os.path.join(result_dir, f'returns-viking-{iteration}.csv')
@@ -181,7 +180,6 @@ def run_experiment_with_validation(combination_file='combinartions.csv'):
         env_class=PortfolioAllocationEnvLogReturn
     )
 
-    update_combination_status(iteration, "completed", csv_file=combination_file)
     update_combination_status(iteration, "completed", csv_file=combination_file)
 
     return iteration
