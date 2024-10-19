@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=new_ewc              # Job name
+#SBATCH --job-name=Retest-Group2        # Job name
 #SBATCH --ntasks=1                      # Number of MPI tasks to request
 #SBATCH --cpus-per-task=1               # Number of CPU cores per MPI task
 #SBATCH --mem=16GB                      # Total memory to request
@@ -11,7 +11,7 @@
 #SBATCH --error=../logs/%x-%j.err               # Standard error log
 #SBATCH --partition=gpu                 # Which partition to use
 #SBATCH --gres=gpu:1                    # Generic resources required per node
-#SBATCH --array=1-6                    # Array range
+#SBATCH --array=1-4                    # Array range
 
 
 # Abort if any command fails
@@ -30,4 +30,4 @@ pip install -r requirements.txt
 
 sleep $((RANDOM%10))
 
-python controller.py 10
+python controller.py 1

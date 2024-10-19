@@ -53,7 +53,7 @@ def prebuild_group_combinations(tic_list, num_iterations, output_file='combinati
     print(f"Unique group combinations with status saved to {output_file}")
 
 
-def get_next_combination(csv_file='combinations.csv', container_id=None):
+def get_next_combination(tic_list, csv_file='combinations.csv', container_id=None):
     """
     Get the next untrained group1 and group2 combination from a CSV file and mark it as training.
 
@@ -64,6 +64,18 @@ def get_next_combination(csv_file='combinations.csv', container_id=None):
     Returns:
     - iteration, group1, group2, lock_file: Iteration number, lists of tickers for group1 and group2.
     """
+
+    # If combinations.csv does not exist, create one.
+    if not os.path.isdir(data_dir):
+        # Create the directory if it does not exist
+        try:
+            os.makedirs(data_dir)
+        except OSError as e:
+            print(f"Error creating directory: {e}")
+    
+    if not os.path.isfile(os.path.join(data_dir, csv_file)):
+        prebuild_group_combinations(tic_list, 500)
+
     
     # Load the CSV file
     df = pd.read_csv(os.path.join(data_dir, csv_file))

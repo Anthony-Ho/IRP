@@ -7,7 +7,6 @@ import argparse
 
 # Local Import
 from experiment_config import tic_list, result_dir, model_dir
-from run_experiment import run_experiment
 from run_experiment_with_validation import run_experiment_with_validation
 
 archive_dir = '../archives'
