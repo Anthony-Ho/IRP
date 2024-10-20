@@ -15,7 +15,7 @@ ARCHIVE_FILE="$ARCHIVE_DIR/returns-archive-$(date +%Y%m%d_%H%M%S).tar.gz"
 
 # Check if there are return files to archive
 if ls $RETURN_FILES 1> /dev/null 2>&1; then
-  tar -czf "$ARCHIVE_FILE" -C "$RESULTS_DIR" $(basename $RETURN_FILES)
+  tar -czf "$ARCHIVE_FILE" -C "$RESULTS_DIR" $(basename -a $RETURN_FILES)
   echo "Archived return files to $ARCHIVE_FILE"
   
   # Remove the original return files after archiving
