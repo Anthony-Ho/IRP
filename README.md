@@ -10,7 +10,11 @@ This project explores the application of Continual Learning (CL) techniques to R
 .
 ├── archives/                    # Archived data and backups
 ├── data/                        # Directory for stock data and combinations files
+│   ├── combinations-rerun-experiments.csv    # Only combinations for replicating the experiement
 ├── docker/                      # Docker configurations and Dockerfile
+│   ├── Dockerfile
+│   ├── requirements.txt
+├── logs/                        # All logfiles
 ├── models/                      # Output directory for saved trained models
 ├── report_assets/               # Directory to store tables and charts for the report
 │   ├── average_cumulative_returns.csv    # Table 1
@@ -19,6 +23,7 @@ This project explores the application of Continual Learning (CL) techniques to R
 │   ├── stability_analysis.csv            # Table 3
 │   └── cumulative_return_boxplots.png    # Figure 1
 ├── results/                     # Output directory for experiment results
+│   ├── combined_results-with-early-stopping.csv    # The original test results of the experiments
 ├── src/                         # Source code for running experiments
 │   ├── __init__.py
 │   ├── combine_results.sh
@@ -39,7 +44,8 @@ This project explores the application of Continual Learning (CL) techniques to R
 ├── .gitignore
 ├── LICENSE
 ├── README.md                    # This README file
-└── run_docker_experiment.sh
+└── run_docker_experiment.sh     # Scripts to run the experiement in docker setup
+└── Wai Cheong Ho Self-Assessment Ethics form.docx     # Approved Ethics Self-Assessment
 ```
 
 ## Prerequisites
@@ -178,6 +184,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Acknowledgments
 This project builds upon the FinRL library and other related works in Reinforcement Learning and Financial Modeling.
+
+This project utilizes and modifies code from the [stable-baselines3](https://github.com/DLR-RM/stable-baselines3) library. Specifically, the `train()` method in the `EWC_PPO`, `EWC_A2C`, and `EWC_DDPG` classes is based on the original `train()` implementation, with modifications to include the Elastic Weight Consolidation (EWC) penalty during loss calculation.
+
 
 
 

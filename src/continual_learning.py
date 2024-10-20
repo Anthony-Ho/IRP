@@ -122,6 +122,16 @@ class EWC_PPO(PPO):
 
     def train(self) -> None:
         """
+        Modified train() method based on stable-baselines3 implementation.
+
+        This method is adapted from the original train() method of stable-baselines3
+        (version X.X.X). The primary modification is the addition of the EWC penalty
+        to the loss calculation, which is applied as part of the Elastic Weight Consolidation
+        (EWC) technique to preserve knowledge from previous tasks.
+
+        Source: https://github.com/DLR-RM/stable-baselines3
+        """
+        """
         Update policy using the currently gathered rollout buffer.
         """
         # Switch to train mode (this affects batch norm / dropout)
@@ -251,6 +261,16 @@ class EWC_A2C(A2C):
 
     def train(self) -> None:
         """
+        Modified train() method based on stable-baselines3 implementation.
+
+        This method is adapted from the original train() method of stable-baselines3
+        (version X.X.X). The primary modification is the addition of the EWC penalty
+        to the loss calculation, which is applied as part of the Elastic Weight Consolidation
+        (EWC) technique to preserve knowledge from previous tasks.
+
+        Source: https://github.com/DLR-RM/stable-baselines3
+        """
+        """
         Update policy using the currently gathered
         rollout buffer (one gradient step over whole data).
         """
@@ -371,6 +391,16 @@ class EWC_DDPG(DDPG):
         self.ewc = ewc
 
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
+        """
+        Modified train() method based on stable-baselines3 implementation.
+
+        This method is adapted from the original train() method of stable-baselines3
+        (version X.X.X). The primary modification is the addition of the EWC penalty
+        to the loss calculation, which is applied as part of the Elastic Weight Consolidation
+        (EWC) technique to preserve knowledge from previous tasks.
+
+        Source: https://github.com/DLR-RM/stable-baselines3
+        """
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
 
