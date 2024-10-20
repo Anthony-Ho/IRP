@@ -7,7 +7,7 @@ import pandas as pd
 # Add src/ to the system path
 sys.path.append('/workspace/IRP/src')
 
-# Import your iteration functions
+# Import local functions
 from experiment_config import tic_list, result_dir, model_dir, PPO_PARAMS, A2C_PARAMS, DDPG_PARAMS
 from training import train_baseline_agents, train_naive_strategy, train_ewc_agents, train_replay_agents
 from data_processing import split_collect_stock_data_from_csv

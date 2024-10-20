@@ -1,4 +1,4 @@
-# Use the official TensorFlow Docker image with GPU support
+# Use the official PyTorch Docker image with GPU support
 FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime
 
 # Set the working directory

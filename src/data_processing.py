@@ -24,10 +24,10 @@ def get_data_from_yahoo(tic_list, start_date='2009-01-01', end_date='2024-01-01'
     # Download historical data for all stocks
     all_df = pd.DataFrame()
     for tic in tic_list:
-      df = yf.download(tic, start=start_date, end=end_date)
-      df['tic'] = tic
-      df = df.ffill()
-      all_df = pd.concat([all_df, df])
+        df = yf.download(tic, start=start_date, end=end_date)
+        df['tic'] = tic
+        df = df.ffill()
+        all_df = pd.concat([all_df, df])
 
     all_df = all_df.reset_index()
     all_df = all_df.set_index(['tic'])
@@ -155,6 +155,7 @@ def split_collect_stock_data_from_csv(tic_list, csv_file='dji_stock_data.csv', c
     - end_date: The end date of the data to filter the data from the CSV.
 
     Returns:
+    - iteration: The iteration number
     - group1, group2: The tickers for group1 and group2.
     - df1, df2: DataFrames for group1 and group2 with technical indicators and covariance.
     """
@@ -177,7 +178,7 @@ def split_collect_stock_data_from_csv(tic_list, csv_file='dji_stock_data.csv', c
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
     # Get the next untrained combination of group1 and group2
-    iteration, group1, group2 = get_next_combination(combination_file)
+    iteration, group1, group2 = get_next_combination(tic_list, combination_file)
 
     # Create df1 and df2 based on the 'tic' index (ticker symbol)
     df = df.reset_index()

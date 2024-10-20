@@ -2,6 +2,7 @@
 
 # Get the absolute path to the directory containing this script
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+ARCHIVE_DIR="$SCRIPT_DIR/../archives"
 RESULTS_DIR="$SCRIPT_DIR/../results"
 COMBINED_RESULTS_FILE="$RESULTS_DIR/combined_results.csv"
 
@@ -40,3 +41,8 @@ for result_file in $RESULTS_DIR/results-viking-*.csv; do
 done
 
 echo "Results combined into $COMBINED_RESULTS_FILE"
+
+# Archive returns files
+echo "Archiving returns files ..."
+bash "$SCRIPT_DIR/archive_returns.sh" "$ARCHIVE_DIR" "$RESULTS_DIR"
+echo "All returns files are archived."
