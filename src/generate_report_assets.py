@@ -16,11 +16,11 @@ def cohens_d(x, y):
     return (x.mean() - y.mean()) / pooled_std
 
 def average_cumulative_returns(data):
-    table1 = data.groupby(['strategy', 'rl_model', 'data_group'])['Cumulative Return'].mean().unstack().round(2)
+    table1 = data.groupby(['strategy', 'rl_model', 'data_group'])['Cumulative Return'].mean().unstack().round(4)
     return table1
 
 def std_dev_cumulative_returns(data):
-    table_std = data.groupby(['strategy', 'rl_model', 'data_group'])['Cumulative Return'].std().unstack().round(2)
+    table_std = data.groupby(['strategy', 'rl_model', 'data_group'])['Cumulative Return'].std().unstack().round(4)
     return table_std
 
 def plasticity_analysis(data):

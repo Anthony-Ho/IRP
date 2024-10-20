@@ -14,7 +14,7 @@ This project explores the application of Continual Learning (CL) techniques to R
 ├── models/                      # Output directory for saved trained models
 ├── report_assets/               # Directory to store tables and charts for the report
 │   ├── average_cumulative_returns.csv    # Table 1
-│   ├── std_dev_cumulative_returns.csv    # Table 1.1
+│   ├── std_dev_cumulative_returns.csv    
 │   ├── plasticity_analysis.csv           # Table 2
 │   ├── stability_analysis.csv            # Table 3
 │   └── cumulative_return_boxplots.png    # Figure 1
@@ -29,8 +29,10 @@ This project explores the application of Continual Learning (CL) techniques to R
 │   ├── envs.py
 │   ├── experiment_config.py
 │   ├── experiment_utils.py
+│   ├── generate_report_assets.py
 │   ├── performance.py
 │   ├── requirements.txt
+│   ├── reset_experiment.sh
 │   ├── run_experiment_with_validation.py
 │   ├── training.py
 │   └── viking-crl.job
@@ -90,14 +92,14 @@ The shell script `run_docker_experiment.sh` simplifies running multiple experime
 
 ## Collecting and Analyzing Results
 
-After completing all experiment iterations, use the generate_report_asset.py script to aggregate and visualize performance metrics. This script will create summary tables and charts for easier analysis.
+After completing all experiment iterations, use the generate_report_assets.py script to aggregate and visualize performance metrics. This script will create summary tables and charts for easier analysis.
 
 ### Instructions
 
 1. Run the Report Script:
     - Execute the following command to process results and generate the report assets:
         ```bash
-        python generate_report_asset.py --input_file results/combined_results.csv --output_dir report_assets
+        python src/generate_report_assets.py --input_file results/combined_results.csv --output_dir report_assets
         ```
     - The output, including summary tables and visualizations, will be saved in the report_assets/ directory.
 
@@ -106,6 +108,60 @@ After completing all experiment iterations, use the generate_report_asset.py scr
       - `average_cumulative_returns.csv`: Average cumulative returns by strategy and model.
       - `plasticity_analysis.csv` and `stability_analysis.csv`: Comparative analyses of adaptability and retention.
       - `cumulative_return_boxplots.png`: Box plot of cumulative returns across strategies, with DJIA benchmark.
+
+## Running Experiments in Viking Cluster
+
+### Intructions
+Follow the steps below to set up and run the experiment on the Viking HPC cluster:
+
+1. Set Up the Environment
+- **Option 1**: Extract the artefact zip file to a directory of your choice.
+- **Option 2**: Clone the submission repository:
+    ```bash
+    git clone https://github.com/Anthony-Ho/IRP.git
+    cd IRP/src
+    ```
+
+2. Edit the Job Script 
+
+    Before submitting the job, ensure the `viking-crl.job` file located in the `src/` directory is configured correctly. You will need to update the following:
+    - **Job name**: Specify a meaningful job name for easy identification.
+    - **Time limit**: Set the appropriate time limit based on your experiment's duration. Allocate approximately 70-100 minutes per iteration, including some buffer time, to ensure all iterations complete.
+    - **Project Account**:  Update the project account field with a valid account for resource allocation.
+    - **array**: Specify the number of parallel jobs to run using the `array` parameter.
+
+3. Reset the Experiment Environment
+
+    To reset and prepare the environment for a fresh run, execute the following script:
+    ```bash
+    ./reset_experiment.sh
+    ```
+    This will clean up previous experiment results, model files, and logs, and copy the required files for a new run.
+
+3. Submit the Batch Job
+
+    Submit the experiment as a batch job to the cluster:
+    ```bash
+    sbatch viking-crl.job
+    ```
+    This will start the specified number of parallel jobs according to the array settings in the job script.
+
+4. Combine Results from Each Iteration
+
+    After all iterations of the experiment have completed, combine the results by running the following command from the `src/` directory:
+    ```bash
+    ./combine_results.sh
+    ```
+    This will merge the individual iteration results into a single file for further analysis.
+
+5. Collect and Analyze Results
+
+    Once the results have been combined, use the following command to generate tables and visualizations for analysis. This command should also be executed from the `src/` directory:
+    ``` bash
+    python generate_report_assets.py --input_file ../results/combined_results.csv --output_dir ../report_assets
+    ```
+    The output will include summary tables and charts, which will be saved in the `report_assets/` directory for review.
+
 
 ## Files and Resources
 - `requirements.txt`: List of dependencies for the Python environment.
