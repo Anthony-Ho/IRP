@@ -166,6 +166,6 @@ models/*.zip
 *.err
 *.tgz
 *.lck
-archives
-logs
+archives/*
+logs/*
 results/return*
